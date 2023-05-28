@@ -1,5 +1,5 @@
 ﻿using Application.Interfaces;
-using Domain.Entities;
+using Domain.Entities.Customer;
 using Moq;
 using WebApi.Controllers;
 
@@ -13,10 +13,10 @@ namespace UnitTest
             //Arrange
             var mockRepo = new Mock<IApplicationDbContext>();
 
-            var controller = new CustomerController((mockRepo.Object));
+            var controller = new CustomerController(mockRepo.Object);
 
             //Act
-   
+
             var result = await controller.Get();
 
             //Assert

@@ -1,18 +1,13 @@
 using Application;
-using Domain.Entities;
+using Application.Interfaces;
+using Domain.Entities.Customer;
 using FluentAssertions.Common;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
 using Persistence;
 using Persistence.Context;
-using System;
+using Persistence.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
-
-
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -36,6 +31,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 //#endregion
 
 builder.Services.AddAutoMapper(typeof(CustomerProfile));
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -67,15 +63,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
-
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-
-//Services.AddAutoMapper(cfg => { cfg.CreateMissingTypeMaps = true; });
 app.Run();
 

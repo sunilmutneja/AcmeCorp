@@ -1,10 +1,9 @@
 ﻿using Application.Interfaces;
 using AutoMapper;
-using Domain.Entities;
+using Domain.Entities.Customer;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace WebApi.Controllers
 {
@@ -13,18 +12,23 @@ namespace WebApi.Controllers
     public class CustomerController : ControllerBase
     {
         private readonly IApplicationDbContext _dbContext;
+        private readonly ICustomerService _customerService;
         private IValidator<CustomerInsertDTO> _validator;
+        private IApplicationDbContext @object;
         private readonly IMapper _mapper;
-        /// <summary>
-        /// Retrieve the employee by their ID.
-        /// </summary>
-        /// <param name="id">The ID of the desired Employee</param>
-        /// <returns>A string status</returns>
-        public CustomerController(IApplicationDbContext dbContext, IValidator<CustomerInsertDTO> validator, IMapper mapper)
+
+
+        public CustomerController(IApplicationDbContext dbContext, IValidator<CustomerInsertDTO> validator, IMapper mapper, ICustomerService customerService)
         {
             _validator = validator;
             _dbContext = dbContext;
             _mapper = mapper;
+            _customerService = customerService;
+        }
+
+        public CustomerController(IApplicationDbContext @object)
+        {
+            this.@object = @object;
         }
 
         [HttpGet]
@@ -51,18 +55,10 @@ namespace WebApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(CustomerInsertDTO customerInsertDTO)
         {
-            var result = await _validator.ValidateAsync(customerInsertDTO);
+            var customer = await  _customerService.AddCustomer(customerInsertDTO);
 
-            if (result.IsValid)
-            {
-               Customer customer = _mapper.Map<Customer>(customerInsertDTO);               
-
-                customer.CreatedDate =  DateTime.Now;
-                customer.ModifiedDate = DateTime.Now;
-                customer.IsActive = true;
-
-                _dbContext.Customers.Add(customer);
-                await _dbContext.SaveChangesAsync();
+            if (customer != null)
+            {                
                 return Ok();
             }
 

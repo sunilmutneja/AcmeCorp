@@ -1,5 +1,5 @@
 ﻿using Application.Interfaces;
-using Domain.Entities;
+using Domain.Entities.Customer;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

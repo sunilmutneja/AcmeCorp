@@ -1,18 +1,50 @@
 ﻿using Application.Interfaces;
-using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AutoMapper;
+using Domain.Entities.Customer;
+using FluentValidation;
 
 namespace Persistence.Repository
 {
-    internal class CustomerService : ICustomerService
+    public class CustomerService : ICustomerService
     {
-        public Task<Customer> AddCustomer(Customer customer)
+        private readonly IApplicationDbContext _dbContext;
+        private IValidator<CustomerInsertDTO> _validator;
+        private readonly IMapper _mapper;
+
+        public CustomerService(IApplicationDbContext dbContext, IValidator<CustomerInsertDTO> validator)
         {
-            throw new NotImplementedException();
+            _dbContext = dbContext;
+            _validator = validator;
+        }
+
+        public async Task<Customer> AddCustomer(CustomerInsertDTO customerInsertDTO)
+        {
+            Customer customer = null;
+
+            try
+            {
+                var result = await _validator.ValidateAsync(customerInsertDTO);
+
+                if (result.IsValid)
+                {
+                    customer = _mapper.Map<Customer>(customerInsertDTO);
+
+                    customer.CreatedDate = DateTime.Now;
+                    customer.ModifiedDate = DateTime.Now;
+                    customer.IsActive = true;
+
+                    _dbContext.Customers.Add(customer);
+                    await _dbContext.SaveChangesAsync();                   
+                }
+
+                return customer;
+            }
+
+            catch(Exception)
+            {
+                throw;
+            }
+                        
         }
 
         public Task DeleteCustomer(int CustomerId)
@@ -31,6 +63,11 @@ namespace Persistence.Repository
         }
 
         public Task<Customer> UpdateCustomer(Customer customer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Customer> AddCustomer(Customer customer)
         {
             throw new NotImplementedException();
         }

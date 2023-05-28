@@ -1,5 +1,5 @@
 ﻿using Application.Interfaces;
-using Domain.Entities;
+using Domain.Entities.Customer;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 
@@ -13,7 +13,6 @@ namespace Persistence.Repository
         {
              _DbContext = dbContext;
         }
-
         public async Task<IEnumerable<Customer>> GetCustomers()
         {
             return await _DbContext.Customers.ToListAsync();

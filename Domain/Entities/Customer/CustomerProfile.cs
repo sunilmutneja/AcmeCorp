@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
 
-namespace Domain.Entities
+namespace Domain.Entities.Customer
 {
     public class CustomerProfile : Profile
     {
-       public CustomerProfile()
+        public CustomerProfile()
         {
             CreateMap<CustomerInsertDTO, Customer>();
-           
+
         }
     }
 }

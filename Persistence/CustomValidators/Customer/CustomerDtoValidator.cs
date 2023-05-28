@@ -1,4 +1,4 @@
-﻿using Domain.Entities;
+﻿using Domain.Entities.Customer;
 using FluentValidation;
 using Microsoft.IdentityModel.Tokens;
 using System.Data;
