@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WebApi</name>
+    </assembly>
+    <members>
+        <member name="M:WebApi.Controllers.CustomerController.#ctor(Application.Interfaces.IApplicationDbContext)">
+            <summary>
+            Retrieve the employee by their ID.
+            </summary>
+            <param name="id">The ID of the desired Employee</param>
+            <returns>A string status</returns>
+        </member>
+    </members>
+</doc>
