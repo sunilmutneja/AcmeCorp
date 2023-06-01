@@ -6,7 +6,7 @@ namespace Domain.Entities.Customer
     {
         public CustomerProfile()
         {
-            CreateMap<CustomerInsertDTO, Customer>();
+            CreateMap<CustomerDTO, Customer>().ReverseMap();
 
         }
     }

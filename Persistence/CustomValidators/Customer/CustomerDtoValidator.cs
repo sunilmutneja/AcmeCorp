@@ -5,7 +5,7 @@ using System.Data;
 
 namespace Persistence.CustomValidators.Customer
 {
-    public class CustomerDtoValidator : AbstractValidator<CustomerInsertDTO>
+    public class CustomerDtoValidator : AbstractValidator<createCustomerDTO>
     {
         public CustomerDtoValidator()
         {

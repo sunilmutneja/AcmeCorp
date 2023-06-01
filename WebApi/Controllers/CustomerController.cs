@@ -1,100 +1,156 @@
 ﻿using Application.Interfaces;
-using AutoMapper;
 using Domain.Entities.Customer;
-using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace WebApi.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class CustomerController : ControllerBase
     {
-        private readonly IApplicationDbContext _dbContext;
         private readonly ICustomerService _customerService;
-        private IValidator<CustomerInsertDTO> _validator;
-        private IApplicationDbContext @object;
-        private readonly IMapper _mapper;
 
-
-        public CustomerController(IApplicationDbContext dbContext, IValidator<CustomerInsertDTO> validator, IMapper mapper, ICustomerService customerService)
+        public CustomerController(ICustomerService customerService)
         {
-            _validator = validator;
-            _dbContext = dbContext;
-            _mapper = mapper;
-            _customerService = customerService;
-        }
-
-        public CustomerController(IApplicationDbContext @object)
-        {
-            this.@object = @object;
+            this._customerService = customerService;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Customer>> Get()
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<CustomerDTO>))]
+        public async Task<IActionResult> GetAll()
         {
-            return await _dbContext.Customers.ToListAsync();
+            var companies = await _customerService.GetCustomersAsync();
+
+            return Ok(companies);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        [HttpGet("{CustomerID:int}", Name = "GetByCustomerID")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CustomerDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesDefaultResponseType]
+        public async Task<ActionResult<CustomerDTO>> GetCustomerID(int CustomerID)
         {
-            if (id < 1)
-                return BadRequest();
+            if (CustomerID <= 0)
+            {
+                return BadRequest(CustomerID);
+            }
+            var CustomerFound = await _customerService.GetByIdAsync(CustomerID);
 
-            var product = await _dbContext.Customers.FirstOrDefaultAsync(m => m.Id == id);
-
-            if (product == null)
+            if (CustomerFound.Data == null)
+            {
                 return NotFound();
-
-            return Ok(product);
-
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Post(CustomerInsertDTO customerInsertDTO)
-        {
-            var customer = await  _customerService.AddCustomer(customerInsertDTO);
-
-            if (customer != null)
-            {                
-                return Ok();
             }
 
-            return BadRequest();
+            return Ok(CustomerFound);
+        }    
+
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CustomerDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)] //Not found
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<CustomerDTO>> CreateCustomer([FromBody] createCustomerDTO createCustomerDTO)
+        {
+            if (createCustomerDTO == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+            var _newCustomer = await _customerService.AddCustomerAsync(createCustomerDTO);
+
+            if (_newCustomer.Success == false && _newCustomer.Message == "Exist")
+            {
+                return Ok(_newCustomer);
+            }
+
+            if (_newCustomer.Success == false && _newCustomer.Message == "RepoError")
+            {
+                ModelState.AddModelError("", $"Some thing went wrong in respository layer when adding Customer {createCustomerDTO}");
+                return StatusCode(500, ModelState);
+            }
+
+            if (_newCustomer.Success == false && _newCustomer.Message == "Error")
+            {
+                ModelState.AddModelError("", $"Some thing went wrong in service layer when adding Customer {createCustomerDTO}");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok(_newCustomer);
+
         }
 
-        [HttpPut]
-        public async Task<IActionResult> Put(Customer customer)
+        [HttpPatch("{customerId:int}", Name = "UpdateCustomer")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)] //Not found
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateCustomer(int customerId, [FromBody] UpdateCustomerDTO updateCustomerDTO)
         {
-            if (customer == null || customer.Id == 0)
-                return BadRequest();
+            if (updateCustomerDTO == null)
+            {
+                return BadRequest(ModelState);
+            }
 
-            var product = await _dbContext.Customers.FindAsync(customer.Id);
+            var _updateCustomer = await _customerService.UpdateCustomerAsync(updateCustomerDTO);
 
-            if (product == null) 
-                return NotFound();
+            if (_updateCustomer.Success == false && _updateCustomer.Message == "NotFound")
+            {
+                return Ok(_updateCustomer);
+            }
 
-            product.Name = customer.Name;
-            product.Mobile = customer.Mobile;
-            product.Email = customer.Email;
-            await _dbContext.SaveChangesAsync();
-            return Ok();
+            if (_updateCustomer.Success == false && _updateCustomer.Message == "RepoError")
+            {
+                ModelState.AddModelError("", $"Some thing went wrong in respository layer when updating Customer {updateCustomerDTO}");
+                return StatusCode(500, ModelState);
+            }
+
+            if (_updateCustomer.Success == false && _updateCustomer.Message == "Error")
+            {
+                ModelState.AddModelError("", $"Some thing went wrong in service layer when updating Customer {updateCustomerDTO}");
+                return StatusCode(500, ModelState);
+            }
+
+
+            return Ok(_updateCustomer);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete("{customerId:int}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)] //Not found
+        [ProducesResponseType(StatusCodes.Status409Conflict)] //Can not be removed 
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteCustomer(int customerId)
         {
-            if (id < 1)
-                return BadRequest();
-            var product = await _dbContext.Customers.FindAsync(id);
-            if (product == null)
-                return NotFound();
-            _dbContext.Customers.Remove(product);
-            await _dbContext.SaveChangesAsync();
-            return Ok();
+
+            var _deleteCustomer = await _customerService.DeleteCustomerAsync(customerId);
+
+
+            if (_deleteCustomer.Success == false && _deleteCustomer.Message == "NotFound")
+            {
+                ModelState.AddModelError("", "Customer Not found");
+                return StatusCode(404, ModelState);
+            }
+
+            if (_deleteCustomer.Success == false && _deleteCustomer.Message == "RepoError")
+            {
+                ModelState.AddModelError("", $"Some thing went wrong in Repository when deleting Customer");
+                return StatusCode(500, ModelState);
+            }
+
+            if (_deleteCustomer.Success == false && _deleteCustomer.Message == "Error")
+            {
+                ModelState.AddModelError("", $"Some thing went wrong in service layer when deleting Customer");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
 
         }
     }
 }
+
+

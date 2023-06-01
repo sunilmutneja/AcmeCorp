@@ -21,7 +21,8 @@ namespace Persistence
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
             services.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
-            services.AddScoped<IValidator<CustomerInsertDTO>, CustomerDtoValidator>();
+            services.AddScoped<IValidator<createCustomerDTO>, CustomerDtoValidator>();
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
 
         }
     }

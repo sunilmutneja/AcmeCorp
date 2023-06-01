@@ -1,18 +1,19 @@
-﻿using Domain.Entities.Customer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain.Common;
+using Domain.Entities.Customer;
 
 namespace Application.Interfaces
 {
     public interface ICustomerService
-    {
-        Task<IEnumerable<Customer>> GetCustomers();
-        Task<Customer> GetCustomer(int CustomerId);
-        Task<Customer> AddCustomer(CustomerInsertDTO customerInsertDTO);
-        Task<Customer> UpdateCustomer(Customer customer);
-        Task DeleteCustomer(int CustomerId);
+    { 
+        Task<ServiceResponse<List<CustomerDTO>>> GetCustomersAsync();
+ 
+        Task<ServiceResponse<CustomerDTO>> GetByIdAsync(int Id);
+
+        Task<ServiceResponse<CustomerDTO>> AddCustomerAsync(createCustomerDTO customerInsertDTO);
+
+        Task<ServiceResponse<CustomerDTO>> UpdateCustomerAsync(UpdateCustomerDTO updateCustomerDTO);
+
+        Task<ServiceResponse<string>> DeleteCustomerAsync(int id);
+
     }
 }

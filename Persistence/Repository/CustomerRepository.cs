@@ -1,66 +1,61 @@
 ﻿using Application.Interfaces;
 using Domain.Entities.Customer;
 using Microsoft.EntityFrameworkCore;
-using Persistence.Context;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace Persistence.Repository
+public class CustomerRepository : ICustomerRepository
 {
-    public class CustomerRepository : ICustomerRepository
+    private readonly IApplicationDbContext _dataContext;
+
+    public CustomerRepository(IApplicationDbContext dataContext)
     {
-        private readonly ApplicationDbContext _DbContext;
+        this._dataContext = dataContext;
+    }
+    public async Task<bool> CustomerExistAsync(string customerName)
+    {
+        return await _dataContext.Customers.AnyAsync(Comp => Comp.Name== customerName);
+    }
 
-        public CustomerRepository( ApplicationDbContext dbContext)
+    public async Task<bool> CustomerExistAsync(int id)
+    {
+        return await _dataContext.Customers.AnyAsync(Comp => Comp.Id == id);
+    }
+
+    public async Task<bool> CreateCustomerAsync(Customer Customer)
+    {
+        await _dataContext.Customers.AddAsync(Customer);
+        return await Save();
+    }
+    public async Task<bool> UpdateCustomerAsync(Customer Customer)
+    {
+        _dataContext.Customers.Update(Customer);
+        return await Save();
+    }
+
+    public async Task<ICollection<Customer>> GetAllCustomersAsync()
+    {
+        return await _dataContext.Customers.ToListAsync();
+    }
+
+    public async Task<Customer> GetCustomerByIDAsync(int customerId)
+    {
+        return await _dataContext.Customers.FirstOrDefaultAsync(Comp => Comp.Id == customerId);
+    }   
+
+    public async Task<bool> DeleteCustomerAsync(int id)
+    {
+        var _exisitngCustomer = await GetCustomerByIDAsync(id);
+
+        if (_exisitngCustomer != null)
         {
-             _DbContext = dbContext;
+            _dataContext.Customers.Remove(_exisitngCustomer);
+            return await Save();
         }
-        public async Task<IEnumerable<Customer>> GetCustomers()
-        {
-            return await _DbContext.Customers.ToListAsync();
-        }
+        return false;
+    }
 
-        public async Task<Customer> GetCustomer(int CustomerId)
-        {
-            return await _DbContext.Customers.FirstOrDefaultAsync(e => e.Id == CustomerId);
-        }
-
-        public async Task<Customer> AddCustomer(Customer Customer)
-        {
-            var result = await _DbContext.Customers.AddAsync(Customer);
-            await _DbContext.SaveChangesAsync();
-            return result.Entity;
-        }
-
-        public async Task<Customer?> UpdateCustomer(Customer Customer)
-        {
-            var result = await _DbContext.Customers.FirstOrDefaultAsync(e => e.Id == Customer.Id);
-
-            if (result != null)
-            {
-                result.Name = Customer.Name;
-                result.Email = Customer.Email;
-                result.Mobile = Customer.Mobile;
-      
-                await _DbContext.SaveChangesAsync();
-
-                return result;
-            }
-
-            return null;
-        }
-
-        public async Task DeleteCustomer(int CustomerId)
-        {
-            var result = await _DbContext.Customers.FirstOrDefaultAsync(e => e.Id == CustomerId);
-            if (result != null)
-            {
-                _DbContext.Customers.Remove(result);
-                await _DbContext.SaveChangesAsync();
-            }
-        }
-
-        public async Task SaveAsync()
-        {
-            await _DbContext.SaveChangesAsync();
-        }
+    private async Task<bool> Save()
+    {
+        return await _dataContext.SaveChangesAsync() >= 0 ? true : false;
     }
 }
