@@ -16,6 +16,7 @@ namespace WebApi.Controllers
             this._customerService = customerService;
         }
 
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<CustomerDTO>))]
         public async Task<IActionResult> GetAll()
